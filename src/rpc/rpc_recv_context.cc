@@ -40,7 +40,7 @@ rpc_recv_context::parse(input_stream<char> &in) {
       // validate the header
       if(kRPCHeaderSize != header.size()) {
         if(in.eof()) {
-          LOG_INFO("Client disconnected. input_stream::eof");
+          LOG_ERROR("Input stream failed to read. input_stream::eof");
         } else {
           LOG_ERROR("Invalid header size `{}`. skipping req", header.size());
         }
