@@ -12,7 +12,7 @@ void rpc_server_stats_printer::start() {
   timer_.set_callback([this] {
     stats().then([this](rpc_server_stats stats) {
       std::stringstream ss;
-      ss << "stats: " << stats << std::endl;
+      ss << "stats: " << stats;
       LOG_INFO("{}", ss.str());
     });
   });
