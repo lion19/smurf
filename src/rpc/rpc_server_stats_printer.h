@@ -10,7 +10,7 @@ class rpc_server_stats_printer {
   public:
   using duration_t = timer<>::duration;
   rpc_server_stats_printer(distributed<rpc_server_stats> &stats,
-                           duration_t d = std::chrono::seconds(1));
+                           duration_t d = std::chrono::seconds(120));
 
   void start();
   future<> stop();
