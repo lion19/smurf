@@ -73,10 +73,10 @@ int main(int args, char **argv, char **env) {
     "ip_address", bpo::value<std::string>()->default_value("localhost"),
     "ip address of server");
   try {
-    auto &&config = app.configuration();
-    uint16_t port = config["rpc_port"].as<uint16_t>();
-    const char *ip = config["ip_address"].as<std::string>().c_str();
     return app.run_deprecated(args, argv, [&] {
+      auto &&config = app.configuration();
+      uint16_t port = config["rpc_port"].as<uint16_t>();
+      const char *ip = config["ip_address"].as<std::string>().c_str();
       smf::LOG_INFO("setting up exit hooks");
       engine().at_exit([&] { return clients.stop(); });
       return clients.start(ip, port, 400)
