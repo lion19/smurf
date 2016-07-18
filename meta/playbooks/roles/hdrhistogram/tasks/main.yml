@@ -8,7 +8,7 @@
     dest='{{goobly_cache_dir}}/hdrhistogram'
     update=yes
     recursive=yes
-    version='eb371a1'
+    version='04db500'
     force=yes
 
 - file:
