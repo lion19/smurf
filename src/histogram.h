@@ -1,6 +1,7 @@
 #pragma once
 #include <chrono>
 #include <memory>
+#include <cassert>
 #include <hdr/hdr_histogram.h>
 
 namespace smf {
@@ -24,7 +25,7 @@ class histogram {
   const struct hdr_histogram *get() const;
   void operator+=(const histogram &o);
 
-  struct histogram_measure auto_measure();
+  std::unique_ptr<struct histogram_measure> auto_measure();
 
   // uses the native hdr_histogram::print.
   // This is anti-seastar. Need to integrate w/
@@ -36,22 +37,26 @@ class histogram {
   private:
   struct hdr_histogram *hist_;
 };
+
 /// simple struct that records the measurement at the dtor
 /// similar to boost_scope_exit;
 struct histogram_measure {
   histogram_measure(histogram *hist)
-    : h(hist), begin_t(std::chrono::high_resolution_clock::now()) {}
-
-  histogram_measure(const histogram_measure &o) = delete; // only move
-
-  histogram_measure(histogram_measure &&o)
-    : h(o.h), begin_t(std::move(o.begin_t)) {}
+    : h(hist), begin_t(std::chrono::high_resolution_clock::now()) {
+    assert(h != nullptr);
+  }
+  histogram_measure(const histogram_measure &o) = delete;
+  histogram_measure(histogram_measure &&o) noexcept
+    : h(o.h),
+      begin_t(std::move(o.begin_t)) {}
 
   ~histogram_measure() {
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
-                      std::chrono::high_resolution_clock::now() - begin_t)
-                      .count();
-    h->record(duration);
+    if(h) {
+      auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+                        std::chrono::high_resolution_clock::now() - begin_t)
+                        .count();
+      h->record(duration);
+    }
   }
   histogram *h;
   std::chrono::high_resolution_clock::time_point begin_t;

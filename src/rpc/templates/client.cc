@@ -1,12 +1,12 @@
 // std
 #include <iostream>
 #include <chrono>
+#include <thread>
 // seastar
 #include <core/distributed.hh>
 #include <core/app-template.hh>
 // smf
 #include "log.h"
-#include "histogram.h"
 
 // templates
 #include "rpc/smf_gen/demo_service.smf.fb.h"
@@ -21,6 +21,7 @@ class rpc_client_wrapper {
     smf::LOG_INFO("setting up the client");
     client_ = make_lw_shared<smf_gen::fbs::rpc::SmurfStorageClient>(
       ipv4_addr{ip, port});
+    client_->enable_histogram_metrics();
   }
 
   future<> send_request() {
@@ -30,9 +31,8 @@ class rpc_client_wrapper {
     smf::rpc_envelope env(builder_.GetBufferPointer(), builder_.GetSize());
 
     builder_.Clear(); // reuse it
-    auto metric = hist_.auto_measure();
     return client_->GetSend(std::move(env))
-      .then([m = std::move(metric)](auto reply) mutable {
+      .then([](auto reply) mutable {
         if(!reply) {
           smf::LOG_INFO("Well.... the server had an OoOps!");
         }
@@ -42,12 +42,13 @@ class rpc_client_wrapper {
           smf::LOG_INFO("Sending req: {}", num_of_req_);
           return this->send_request();
         } else {
+          smf::LOG_INFO("================================");
+          smf::LOG_INFO("Thread ID: {}", std::this_thread::get_id());
+          client_->get_histogram()->stdout_print();
           return make_ready_future<>();
         }
       });
   }
-
-  const smf::histogram &histogram() const { return hist_; }
 
   future<> stop() { return make_ready_future<>(); }
 
@@ -55,7 +56,6 @@ class rpc_client_wrapper {
   lw_shared_ptr<smf_gen::fbs::rpc::SmurfStorageClient> client_;
   flatbuffers::FlatBufferBuilder builder_;
   size_t num_of_req_;
-  smf::histogram hist_;
 };
 
 int main(int args, char **argv, char **env) {

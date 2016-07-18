@@ -36,8 +36,8 @@ const struct hdr_histogram *histogram::get() const { return hist_; }
 
 void histogram::operator+=(const histogram &o) { ::hdr_add(hist_, o.get()); }
 
-struct histogram_measure histogram::auto_measure() {
-  return histogram_measure(this);
+std::unique_ptr<struct histogram_measure> histogram::auto_measure() {
+  return std::make_unique<struct histogram_measure>(this);
 }
 void histogram::stdout_print() const {
   ::hdr_percentiles_print(hist_,
