@@ -78,7 +78,7 @@ join ("${CXX_FLAG_LIST}" " " CMAKE_CXX_FLAGS)
 
 # smf rpc
 add_library (smfrpc STATIC ${RPC_LIB_SOURCES})
-target_link_libraries (smfrpc ${SEASTAR_LDFLAGS})
+target_link_libraries (smfrpc hdr_histogram_static ${SEASTAR_LDFLAGS} )
 add_dependencies(smfrpc rpc_serialization smf_gen_demo_types)
 # generator
 add_executable (smf_gen ${SMF_GEN_SOURCES})
