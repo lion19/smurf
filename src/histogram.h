@@ -1,10 +1,11 @@
 #pragma once
 #include <chrono>
+#include <memory>
 #include <hdr/hdr_histogram.h>
 
 namespace smf {
-  class histogram;
-  struct histogram_measure;
+class histogram;
+struct histogram_measure;
 }
 
 namespace smf {
@@ -13,6 +14,9 @@ namespace smf {
 class histogram {
   public:
   histogram();
+  histogram(const histogram &o);
+  histogram(histogram &&o);
+
   void record(const uint64_t &v);
   void record_multiple_times(const uint64_t &v, const uint32_t &times);
   void record_corrected(const uint64_t &v, const uint64_t &interval);
@@ -21,6 +25,11 @@ class histogram {
   void operator+=(const histogram &o);
 
   struct histogram_measure auto_measure();
+
+  // uses the native hdr_histogram::print.
+  // This is anti-seastar. Need to integrate w/
+  // dma_file::open
+  void stdout_print() const;
 
   ~histogram();
 
@@ -32,6 +41,12 @@ class histogram {
 struct histogram_measure {
   histogram_measure(histogram *hist)
     : h(hist), begin_t(std::chrono::high_resolution_clock::now()) {}
+
+  histogram_measure(const histogram_measure &o) = delete; // only move
+
+  histogram_measure(histogram_measure &&o)
+    : h(o.h), begin_t(std::move(o.begin_t)) {}
+
   ~histogram_measure() {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
                       std::chrono::high_resolution_clock::now() - begin_t)

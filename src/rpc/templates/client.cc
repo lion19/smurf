@@ -6,6 +6,7 @@
 #include <core/app-template.hh>
 // smf
 #include "log.h"
+#include "histogram.h"
 
 // templates
 #include "rpc/smf_gen/demo_service.smf.fb.h"
@@ -29,20 +30,10 @@ class rpc_client_wrapper {
     smf::rpc_envelope env(builder_.GetBufferPointer(), builder_.GetSize());
 
     builder_.Clear(); // reuse it
-
-    auto begin_send_t = std::chrono::high_resolution_clock::now();
-
+    auto metric = hist_.auto_measure();
     return client_->GetSend(std::move(env))
-      .then([begin_send_t](auto reply) mutable {
-        if(reply) {
-          auto duration =
-            std::chrono::duration_cast<std::chrono::microseconds>(
-              std::chrono::high_resolution_clock::now() - begin_send_t)
-              .count();
-          smf::LOG_INFO(
-            "Got reply from server with status: {} in {} microseconds",
-            reply.ctx->status(), duration);
-        } else {
+      .then([m = std::move(metric)](auto reply) mutable {
+        if(!reply) {
           smf::LOG_INFO("Well.... the server had an OoOps!");
         }
       })
@@ -56,12 +47,15 @@ class rpc_client_wrapper {
       });
   }
 
+  const smf::histogram &histogram() const { return hist_; }
+
   future<> stop() { return make_ready_future<>(); }
 
   private:
   lw_shared_ptr<smf_gen::fbs::rpc::SmurfStorageClient> client_;
   flatbuffers::FlatBufferBuilder builder_;
   size_t num_of_req_;
+  smf::histogram hist_;
 };
 
 int main(int args, char **argv, char **env) {

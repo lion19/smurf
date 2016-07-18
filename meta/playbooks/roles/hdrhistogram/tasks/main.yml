@@ -24,7 +24,7 @@
 
 - name: Install
   shell:
-    make install CXXFLAGS="-g -O3" -j{{ansible_processor_vcpus}}
+    make install CXXFLAGS="-fPIC -O3" -j{{ansible_processor_vcpus}}
   args:
     chdir: '{{goobly_cache_dir}}/hdrhistogram/build'
     creates: '{{third_party_dir}}/lib/libhdr_histogram_static.a'

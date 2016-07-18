@@ -1,5 +1,4 @@
 set(RPC_LIB_SOURCES
-  ${PROJECT_SOURCE_DIR}/src/histogram.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_handle_router.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_server_stats_printer.cc
   ${PROJECT_SOURCE_DIR}/src/rpc/rpc_envelope.cc
